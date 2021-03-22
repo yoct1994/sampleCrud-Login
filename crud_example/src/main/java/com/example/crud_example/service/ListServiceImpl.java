@@ -7,6 +7,9 @@ import com.example.crud_example.entity.list_image.ListImage;
 import com.example.crud_example.entity.list_image.repository.ListImageRepository;
 import com.example.crud_example.entity.user.User;
 import com.example.crud_example.entity.user.repository.UserRepository;
+import com.example.crud_example.error.exceptions.ListImageNotFoundException;
+import com.example.crud_example.error.exceptions.ListNotFoundException;
+import com.example.crud_example.error.exceptions.UserNotFoundException;
 import com.example.crud_example.jwts.JwtProvider;
 import com.example.crud_example.payload.request.ListRequest;
 import com.example.crud_example.payload.request.ListUpdateRequest;
@@ -49,14 +52,17 @@ public class ListServiceImpl implements ListService{
     @Override
     public java.util.List<ListResponse> getList(ListType listType, String token) {
         User user = userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         java.util.List<ListResponse> response = new ArrayList<>();
         java.util.List<List> allOfList = listRepository.findAllByListType(listType);
 
+        if(allOfList == null)
+            throw new ListNotFoundException();
+
         for(List list : allOfList) {
             ListImage listImage = listImageRepository.findByListId(list.getListId())
-                    .orElseThrow(RuntimeException::new);
+                    .orElseThrow(ListImageNotFoundException::new);
 
             ListResponse listResponse = ListResponse.builder()
                     .name(user.getName())
@@ -77,10 +83,10 @@ public class ListServiceImpl implements ListService{
     @Override
     public byte[] getImage(String imageName) {
         listImageRepository.findByImageName(imageName)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(ListImageNotFoundException::new);
 
         File file = new File(imageDir, imageName);
-        if (!file.exists()) throw new RuntimeException();
+        if (!file.exists()) throw new ListImageNotFoundException();
 
         InputStream inputStream = new FileInputStream(file);
 
@@ -90,10 +96,10 @@ public class ListServiceImpl implements ListService{
     @Override
     public void updateList(Integer listId, ListUpdateRequest listUpdateRequest, String token) {
         userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         List list = listRepository.findByListId(listId)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(ListNotFoundException::new);
 
         setIfNotNull(list::setTitle, listUpdateRequest.getTitle());
         setIfNotNull(list::setContent, listUpdateRequest.getContent());
@@ -105,7 +111,7 @@ public class ListServiceImpl implements ListService{
     @Override
     public void write(ListRequest listRequest, String token) {
         User user = userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         List list = List.builder()
                 .listType(ListType.PUBLIC)
@@ -142,10 +148,10 @@ public class ListServiceImpl implements ListService{
     @Override
     public void listImageUpdate(String imageName, MultipartFile listImage, String token) {
         userRepository.findById(Integer.parseInt(jwtProvider.getUserId(token)))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         ListImage image = listImageRepository.findByImageName(imageName)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(ListImageNotFoundException::new);
 
         File imageFile = new File(imageDir, image.getImageName());
 
@@ -169,13 +175,13 @@ public class ListServiceImpl implements ListService{
     @Transactional
     public void deleteList(Integer listId, String token) {
         userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         List list = listRepository.findByListId(listId)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(ListNotFoundException::new);
 
         ListImage listImage = listImageRepository.findByListId(list.getListId())
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(ListImageNotFoundException::new);
 
         if (!listImage.getImageName().equals("null") || !listImage.getImageName().equals("deleted")) {
             File file = new File(imageDir, listImage.getImageName());
@@ -191,10 +197,10 @@ public class ListServiceImpl implements ListService{
     @Transactional
     public void listImageDelete(String imageName, String token) {
         userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(UserNotFoundException::new);
 
         ListImage listImage = listImageRepository.findByImageName(imageName)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(ListImageNotFoundException::new);
 
         File file = new File(imageDir, listImage.getImageName());
         if(!file.exists()) file.delete();

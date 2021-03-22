@@ -1,5 +1,6 @@
 package com.example.crud_example.jwts;
 
+import com.example.crud_example.error.exceptions.InvalidTokenException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +23,6 @@ public class JwtProvider {
     @Value("${jwt.refreshToken}")
     private Integer expireRefreshToken;
 
-    @Value("${jwt.prefix}")
-    private String prefix;
-
     public String generateAccessToken(Integer userId) {
         return Jwts.builder()
                 .setExpiration(new Date(System.currentTimeMillis() + expireAccessToken * 1000))
@@ -45,14 +43,6 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if(bearerToken != null && bearerToken.startsWith(prefix)) {
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
-
     public boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(secretKey)
@@ -70,6 +60,8 @@ public class JwtProvider {
 
     public String getUserId(String token) {
         System.out.println(token);
+        if(validateToken(token))
+            throw new InvalidTokenException();
 
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }

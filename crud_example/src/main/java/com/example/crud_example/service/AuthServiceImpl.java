@@ -4,6 +4,9 @@ import com.example.crud_example.entity.token.Token;
 import com.example.crud_example.entity.token.repository.TokenRepository;
 import com.example.crud_example.entity.user.User;
 import com.example.crud_example.entity.user.repository.UserRepository;
+import com.example.crud_example.error.exceptions.InvalidTokenException;
+import com.example.crud_example.error.exceptions.IsNotRefreshTokenException;
+import com.example.crud_example.error.exceptions.LoginFailedException;
 import com.example.crud_example.jwts.JwtProvider;
 import com.example.crud_example.payload.request.SignInRequest;
 import com.example.crud_example.payload.response.TokenResponse;
@@ -38,17 +41,18 @@ public class AuthServiceImpl implements AuthService{
                             .refreshToken(refreshToken)
                             .build();
                 })
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(LoginFailedException::new);
     }
 
     @Override
     public TokenResponse refreshToken(String oldToken) {
         if(jwtProvider.isRefreshToken(oldToken))
-            throw new RuntimeException();
+            throw new IsNotRefreshTokenException();
 
         return tokenRepository.findByRefreshToken(oldToken)
                 .map(token -> {
                     String newRefreshToken = jwtProvider.generateRefreshToken(token.getUserId());
+
                     return token.update(newRefreshToken);
                 })
                 .map(tokenRepository::save)
@@ -59,6 +63,6 @@ public class AuthServiceImpl implements AuthService{
                             .refreshToken(token.getRefreshToken())
                             .build();
                 })
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(InvalidTokenException::new);
     }
 }
