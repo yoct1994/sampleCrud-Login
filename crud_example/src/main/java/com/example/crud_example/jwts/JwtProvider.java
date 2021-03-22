@@ -60,7 +60,7 @@ public class JwtProvider {
 
     public String getUserId(String token) {
         System.out.println(token);
-        if(validateToken(token))
+        if(!validateToken(token))
             throw new InvalidTokenException();
 
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();

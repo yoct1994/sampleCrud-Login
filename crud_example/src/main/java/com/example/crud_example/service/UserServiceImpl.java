@@ -18,7 +18,7 @@ public class UserServiceImpl implements UserService{
         User user = userRepository.findById(signUpRequest.getId())
                 .orElse(null);
 
-        if(user == null) {
+        if(user != null) {
             throw new UserAlreadyException();
         }
 

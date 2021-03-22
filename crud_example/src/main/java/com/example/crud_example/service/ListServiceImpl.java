@@ -57,7 +57,7 @@ public class ListServiceImpl implements ListService{
         java.util.List<ListResponse> response = new ArrayList<>();
         java.util.List<List> allOfList = listRepository.findAllByListType(listType);
 
-        if(allOfList == null)
+        if(allOfList.isEmpty())
             throw new ListNotFoundException();
 
         for(List list : allOfList) {
