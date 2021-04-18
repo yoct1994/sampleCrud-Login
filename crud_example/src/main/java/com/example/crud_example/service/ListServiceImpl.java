@@ -51,7 +51,7 @@ public class ListServiceImpl implements ListService{
 
     @Override
     public java.util.List<ListResponse> getList(ListType listType, String token) {
-        User user = userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
+        userRepository.findByUserId(Integer.parseInt(jwtProvider.getUserId(token)))
                 .orElseThrow(UserNotFoundException::new);
 
         java.util.List<ListResponse> response = new ArrayList<>();
@@ -63,6 +63,9 @@ public class ListServiceImpl implements ListService{
         for(List list : allOfList) {
             ListImage listImage = listImageRepository.findByListId(list.getListId())
                     .orElseThrow(ListImageNotFoundException::new);
+
+            User user = userRepository.findByUserId(list.getUserId())
+                    .orElseThrow(UserNotFoundException::new);
 
             ListResponse listResponse = ListResponse.builder()
                     .name(user.getName())
